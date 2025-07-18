@@ -1,0 +1,184 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Connexion Relaxante</title>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: linear-gradient(-45deg, #d8b4fe, #c084fc, #a78bfa, #818cf8);
+      background-size: 400% 400%;
+      animation: gradient 20s ease infinite;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    @keyframes gradient {
+      0% {background-position:0% 50%}
+      50% {background-position:100% 50%}
+      100% {background-position:0% 50%}
+    }
+    .container {
+      width: 360px;
+      background: rgba(255,255,255,0.95);
+      padding: 30px;
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+      text-align: center;
+      transition: transform 0.4s ease, opacity 0.8s ease;
+      transform: scale(1);
+      opacity: 1;
+    }
+    .container.hidden { display: none; }
+    .fade { opacity: 0; transform: scale(0.98); }
+    h2 { margin-bottom: 18px; color: #4b0082; }
+    input, button {
+      width: 100%; padding: 12px; margin: 8px 0;
+      border: 1px solid #ccc; border-radius: 8px;
+      font-size: 16px;
+    }
+    button {
+      background: #7c3aed; color: white; border: none;
+      cursor: pointer; transition: background .3s;
+    }
+    button:hover { background: #6d28d9; }
+    .message { font-size: 14px; margin-top: 10px; }
+    .error { color: #ef4444; }
+    .success { color: #10b981; }
+    .spinner {
+      margin: 20px auto;
+      width: 40px; height: 40px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #7c3aed;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div class="container" id="login">
+    <h2>Connexion</h2>
+    <input id="identifiant" placeholder="Identifiant">
+    <input type="password" id="motdepasse" placeholder="Mot de passe">
+    <button onclick="login()">Se connecter</button>
+    <div class="message" id="loginMessage"></div>
+  </div>
+
+  <div class="container hidden" id="loadingScreen">
+    <h2>Connexion en cours...</h2>
+    <div class="spinner"></div>
+  </div>
+
+  <div class="container hidden" id="dashboard">
+    <h2>Bienvenue !</h2>
+    <p>Accès accordé.</p>
+    <button onclick="showAuthAgent()">Mode agent</button>
+    <button onclick="logout()">Déconnexion</button>
+    <audio id="successSound">
+      <source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" type="audio/ogg">
+    </audio>
+  </div>
+
+  <div class="container hidden" id="auth-agent">
+    <h2>Code Agent</h2>
+    <input type="password" id="agentCode" placeholder="Code agent">
+    <button onclick="verifyAgentCode()">Valider</button>
+    <div class="message" id="authMessage"></div>
+  </div>
+
+  <div class="container hidden" id="authAfterAttempts">
+    <h2>Accès temporairement bloqué</h2>
+    <p>Entrez le code agent pour continuer :</p>
+    <input type="password" id="agentCodeAttempts" placeholder="Code agent">
+    <button onclick="verifyAgentCodeAttempts()">Valider</button>
+    <div class="message" id="authAttemptMessage"></div>
+  </div>
+
+  <script>
+    let essaisRestants = 3;
+    const sound = document.getElementById('successSound');
+    function playSound(){ sound.currentTime = 0; sound.play(); }
+
+    function login() {
+      const id = document.getElementById('identifiant').value.trim();
+      const pw = document.getElementById('motdepasse').value.trim();
+      const msg = document.getElementById('loginMessage');
+      if(id==='silvano' && pw==='favaro123') {
+        msg.textContent='';
+        const L = document.getElementById('login');
+        L.classList.add('fade');
+        setTimeout(()=>{
+          L.classList.add('hidden');
+          document.getElementById('loadingScreen').classList.remove('hidden');
+          setTimeout(()=>{
+            document.getElementById('loadingScreen').classList.add('hidden');
+            const D = document.getElementById('dashboard');
+            D.classList.remove('hidden');
+            playSound();
+          },2000);
+        },800);
+      } else {
+        essaisRestants--;
+        msg.innerHTML = essaisRestants>0
+          ? `<span class="error">Mauvais identifiant ou mot de passe. ${essaisRestants} essais restants.</span>`
+          : (()=>{ document.getElementById('login').classList.add('hidden'); document.getElementById('authAfterAttempts').classList.remove('hidden'); return ''; })();
+      }
+    }
+
+    function showAuthAgent(){
+      document.getElementById('dashboard').classList.add('fade');
+      setTimeout(()=>{
+        document.getElementById('dashboard').classList.add('hidden');
+        document.getElementById('auth-agent').classList.remove('hidden');
+      },400);
+    }
+
+    function verifyAgentCode(){
+      const code = document.getElementById('agentCode').value.trim();
+      const m = document.getElementById('authMessage');
+      if(code==='1312') {
+        m.innerHTML='<span class="success">Code accepté...</span>';
+        setTimeout(()=>{
+          document.getElementById('auth-agent').classList.add('hidden');
+          const D = document.getElementById('dashboard');
+          D.classList.remove('hidden');
+          playSound();
+        },1500);
+      } else m.innerHTML='<span class="error">Code incorrect.</span>';
+    }
+
+    function verifyAgentCodeAttempts(){
+      const code = document.getElementById('agentCodeAttempts').value.trim();
+      const m = document.getElementById('authAttemptMessage');
+      if(code==='1312') {
+        m.innerHTML='<span class="success">Code accepté...</span>';
+        setTimeout(()=>{
+          document.getElementById('authAfterAttempts').classList.add('hidden');
+          document.getElementById('dashboard').classList.remove('hidden');
+          essaisRestants=3;
+          document.getElementById('identifiant').value='';
+          document.getElementById('motdepasse').value='';
+          document.getElementById('loginMessage').textContent='';
+          playSound();
+        },1500);
+      } else m.innerHTML='<span class="error">Code incorrect.</span>';
+    }
+  
+    function logout(){
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('identifiant').value='';
+      document.getElementById('motdepasse').value='';
+      essaisRestants = 3;
+      document.getElementById('login').classList.remove('hidden');
+    }
+    
+</script>
+</body>
+</html>
